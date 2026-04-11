@@ -43,7 +43,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public Booking approveBooking(Long id) {
+    public Booking approveBooking(String id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
@@ -52,7 +52,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public Booking rejectBooking(Long id) {
+    public Booking rejectBooking(String id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 

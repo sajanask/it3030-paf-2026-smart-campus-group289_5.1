@@ -32,13 +32,13 @@ public class BookingController {
 
     // Approve booking
     @PutMapping("/{id}/approve")
-    public Booking approve(@PathVariable Long id) {
+    public Booking approve(@PathVariable String id) {
         return bookingService.approveBooking(id);
     }
 
     // Reject booking
     @PutMapping("/{id}/reject")
-    public Booking reject(@PathVariable Long id) {
+    public Booking reject(@PathVariable String id) {
         return bookingService.rejectBooking(id);
     }
 

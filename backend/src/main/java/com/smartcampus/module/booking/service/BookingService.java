@@ -12,9 +12,9 @@ public interface BookingService {
 
     List<Booking> getAllBookings();
 
-    Booking approveBooking(Long id);
+    Booking approveBooking(String id);
 
-    Booking rejectBooking(Long id);
+    Booking rejectBooking(String id);
 
     AvailabilityResponse checkAvailability(AvailabilityRequest request);
 }
