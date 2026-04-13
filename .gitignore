@@ -12,6 +12,8 @@ frontend/dist-ssr/
 # Logs
 *.log
 logs/
+*.pid
+*.pid.lock
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -29,3 +31,23 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files
+.env
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Test / coverage output
+coverage/
+*.lcov
+
+# Tool caches / temp
+.cache/
+tmp/
+temp/
+.eslintcache
