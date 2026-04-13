@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { createBooking } from "../api/bookingApi";
+import { useNavigate } from "react-router-dom";
 
-const BookingForm = () => {
+const BookingForm = ({ onBookingCreated }) => {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     resourceId: "",
     date: "",
@@ -93,9 +95,12 @@ const BookingForm = () => {
     
     setIsSubmitting(true);
     try {
-      await createBooking(form);
+      const createdBooking = await createBooking(form);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 4000);
+      if (onBookingCreated) {
+        onBookingCreated(createdBooking);
+      }
       setForm({
         resourceId: "",
         date: "",
@@ -175,13 +180,25 @@ const BookingForm = () => {
               
               {/* Navigation Tabs */}
               <div className="flex gap-1 mt-5 border-t border-white/20 pt-4">
-                <button className="px-4 py-2 bg-white/20 rounded-lg text-white text-sm font-medium backdrop-blur">
+                <button
+                  type="button"
+                  onClick={() => navigate("/bookings")}
+                  className="px-4 py-2 bg-white/20 rounded-lg text-white text-sm font-medium backdrop-blur"
+                >
                   📝 New Booking
                 </button>
-                <button className="px-4 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg text-sm font-medium transition-all">
+                <button
+                  type="button"
+                  onClick={() => navigate("/my-bookings")}
+                  className="px-4 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
+                >
                   📋 My Bookings
                 </button>
-                <button className="px-4 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg text-sm font-medium transition-all">
+                <button
+                  type="button"
+                  onClick={() => navigate("/admin/bookings")}
+                  className="px-4 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
+                >
                   📊 Dashboard
                 </button>
               </div>

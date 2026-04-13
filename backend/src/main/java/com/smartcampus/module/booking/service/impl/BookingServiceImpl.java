@@ -9,17 +9,27 @@ import com.smartcampus.enums.BookingStatus;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 @Service
 public class BookingServiceImpl implements BookingService {
+    private static final Logger log = LoggerFactory.getLogger(BookingServiceImpl.class);
 
     @Autowired
     private BookingRepository bookingRepository;
 
     @Override
     public Booking createBooking(Booking booking) {
+        log.info("Create booking request: resourceId={}, date={}, start={}, end={}, studentId={}, department={}",
+                booking.getResourceId(),
+                booking.getDate(),
+                booking.getStartTime(),
+                booking.getEndTime(),
+                booking.getStudentId(),
+                booking.getDepartment());
 
         List<Booking> existing = bookingRepository
                 .findByResourceIdAndDate(booking.getResourceId(), booking.getDate());
@@ -34,7 +44,9 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStatus(BookingStatus.PENDING);
 
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+        log.info("Booking saved successfully with id={} and status={}", saved.getId(), saved.getStatus());
+        return saved;
     }
 
     @Override

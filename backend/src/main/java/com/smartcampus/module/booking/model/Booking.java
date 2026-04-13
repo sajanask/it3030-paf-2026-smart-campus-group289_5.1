@@ -17,6 +17,8 @@ public class Booking {
     private LocalTime startTime;
     private LocalTime endTime;
     private String purpose;
+    private String studentId;
+    private String department;
 
     private BookingStatus status;
 
@@ -37,6 +39,12 @@ public class Booking {
 
     public String getPurpose() { return purpose; }
     public void setPurpose(String purpose) { this.purpose = purpose; }
+
+    public String getStudentId() { return studentId; }
+    public void setStudentId(String studentId) { this.studentId = studentId; }
+
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
 
     public BookingStatus getStatus() { return status; }
     public void setStatus(BookingStatus status) { this.status = status; }
