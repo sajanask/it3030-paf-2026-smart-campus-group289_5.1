@@ -40,19 +40,16 @@ export const checkAvailability = async (data) => {
 // Approve booking
 export const approveBooking = async (id) => {
   try {
-    const res = await axios.put(`${API}/${id}/approve`);
-    return res.data;
+    return (await axios.put(`${API}/${id}/approve`)).data;
   } catch (err) {
-    throw "Approve failed!";
+    throw new Error(err.response?.data?.message || "Failed to approve booking");
   }
 };
 
-// Reject booking
 export const rejectBooking = async (id) => {
   try {
-    const res = await axios.put(`${API}/${id}/reject`);
-    return res.data;
+    return (await axios.put(`${API}/${id}/reject`)).data;
   } catch (err) {
-    throw "Reject failed!";
+    throw new Error(err.response?.data?.message || "Failed to reject booking");
   }
 };

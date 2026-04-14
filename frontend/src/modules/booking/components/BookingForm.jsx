@@ -194,13 +194,6 @@ const BookingForm = ({ onBookingCreated }) => {
                 >
                   📋 My Bookings
                 </button>
-                <button
-                  type="button"
-                  onClick={() => navigate("/admin/bookings")}
-                  className="px-4 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg text-sm font-medium transition-all"
-                >
-                  📊 Dashboard
-                </button>
               </div>
             </div>
           </div>
