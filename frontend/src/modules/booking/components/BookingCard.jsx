@@ -42,7 +42,14 @@ const BookingCard = ({ booking, isAdmin, refresh }) => {
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition">
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-800">{booking.resourceId}</h3>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {booking.resourceName || "Unknown Resource"}
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {booking.resourceDescription || "No resource description available."}
+          </p>
+        </div>
         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusColor}`}>
           {booking.status}
         </span>
@@ -55,6 +62,12 @@ const BookingCard = ({ booking, isAdmin, refresh }) => {
         <p>
           <span className="font-medium text-gray-700">Time:</span> {booking.startTime} - {booking.endTime}
         </p>
+        {isAdmin && (
+          <p>
+            <span className="font-medium text-gray-700">Purpose:</span>{" "}
+            {booking.purpose || "No purpose provided."}
+          </p>
+        )}
       </div>
 
       {isAdmin && (

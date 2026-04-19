@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getBookings } from "../api/bookingApi";
+import { getResources } from "../api/resourceApi";
 import BookingCard from "./BookingCard";
 
 const BookingList = ({ isAdmin, refreshSignal, onBack }) => {
@@ -14,8 +15,33 @@ const BookingList = ({ isAdmin, refreshSignal, onBack }) => {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const data = await getBookings();
-      setBookings(data);
+      setError("");
+
+      const [bookingData, resourceData] = await Promise.all([
+        getBookings(),
+        getResources()
+      ]);
+
+      const resourcesById = new Map(
+        (Array.isArray(resourceData) ? resourceData : []).map((resource) => [
+          resource.id,
+          resource
+        ])
+      );
+
+      const normalizedBookings = (Array.isArray(bookingData) ? bookingData : []).map(
+        (booking) => {
+          const resource = resourcesById.get(booking.resourceId);
+
+          return {
+            ...booking,
+            resourceName: resource?.name || "Unknown Resource",
+            resourceDescription: resource?.description || "No resource description available."
+          };
+        }
+      );
+
+      setBookings(normalizedBookings);
     } catch (err) {
       setError("Failed to load bookings");
     } finally {
@@ -24,7 +50,7 @@ const BookingList = ({ isAdmin, refreshSignal, onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 p-6">
+    <div className="min-h-screen bg-transparent p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">

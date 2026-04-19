@@ -5,8 +5,9 @@ const MyBookingsPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="min-h-screen p-6">
+      <div className="mx-auto mb-4 max-w-7xl rounded-3xl border border-white/40 bg-white/60 p-5 shadow-lg backdrop-blur-xl">
+        <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -19,6 +20,7 @@ const MyBookingsPage = () => {
         </button>
         <h1 className="text-2xl font-bold">My Bookings</h1>
         <div className="w-[72px]" />
+        </div>
       </div>
       <BookingList />
     </div>
