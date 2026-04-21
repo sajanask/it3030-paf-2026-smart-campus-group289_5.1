@@ -2,6 +2,7 @@ package com.smartcampus.module.booking.controller;
 
 import com.smartcampus.module.booking.dto.AvailabilityRequest;
 import com.smartcampus.module.booking.dto.AvailabilityResponse;
+import com.smartcampus.module.booking.exception.BookingConflictException;
 import com.smartcampus.module.booking.model.Booking;
 import com.smartcampus.module.booking.service.BookingService;
 
@@ -38,6 +39,11 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBooking);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Booking> update(@PathVariable String id, @RequestBody Booking booking) {
+        return ResponseEntity.ok(bookingService.updateBooking(id, booking));
+    }
+
     // Get all bookings
     @GetMapping
     public ResponseEntity<List<Booking>> getAll() {
@@ -62,6 +68,15 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.checkAvailability(request));
     }
 
+    @ExceptionHandler(BookingConflictException.class)
+    public ResponseEntity<Map<String, String>> handleBookingConflict(BookingConflictException exception) {
+        String message = exception.getMessage() == null
+            ? "Booking conflicts with an approved booking."
+            : exception.getMessage();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", message));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException exception) {
         String message = exception.getMessage() == null ? "Booking operation failed" : exception.getMessage();
@@ -69,8 +84,6 @@ public class BookingController {
 
         if (message.toLowerCase().contains("not found")) {
             status = HttpStatus.NOT_FOUND;
-        } else if (message.toLowerCase().contains("already booked")) {
-            status = HttpStatus.CONFLICT;
         }
 
         return ResponseEntity.status(status).body(Map.of("message", message));

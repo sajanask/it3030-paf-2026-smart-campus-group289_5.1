@@ -8,6 +8,7 @@ public class AvailabilityRequest {
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
+    private String currentBookingId;
 
     // Constructors
     public AvailabilityRequest() {}
@@ -50,5 +51,13 @@ public class AvailabilityRequest {
 
     public void setEndTime(LocalTime endTime) {
         this.endTime = endTime;
+    }
+
+    public String getCurrentBookingId() {
+        return currentBookingId;
+    }
+
+    public void setCurrentBookingId(String currentBookingId) {
+        this.currentBookingId = currentBookingId;
     }
 }

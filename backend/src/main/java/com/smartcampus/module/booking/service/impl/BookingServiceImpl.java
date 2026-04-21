@@ -5,6 +5,7 @@ import com.smartcampus.module.booking.repository.BookingRepository;
 import com.smartcampus.module.booking.service.BookingService;
 import com.smartcampus.module.booking.dto.AvailabilityRequest;
 import com.smartcampus.module.booking.dto.AvailabilityResponse;
+import com.smartcampus.module.booking.exception.BookingConflictException;
 import com.smartcampus.enums.BookingStatus;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,22 +32,40 @@ public class BookingServiceImpl implements BookingService {
                 booking.getStudentId(),
                 booking.getDepartment());
 
-        List<Booking> existing = bookingRepository
-                .findByResourceIdAndDate(booking.getResourceId(), booking.getDate());
-
-        // 🔥 Conflict Checking Logic
-        for (Booking b : existing) {
-            if (booking.getStartTime().isBefore(b.getEndTime()) &&
-                booking.getEndTime().isAfter(b.getStartTime())) {
-                throw new RuntimeException("Time slot already booked!");
-            }
-        }
+        validateNoApprovedConflict(booking.getResourceId(), booking.getDate(), booking.getStartTime(), booking.getEndTime(), booking.getId());
 
         booking.setStatus(BookingStatus.PENDING);
 
         Booking saved = bookingRepository.save(booking);
         log.info("Booking saved successfully with id={} and status={}", saved.getId(), saved.getStatus());
         return saved;
+    }
+
+    @Override
+    public Booking updateBooking(String id, Booking booking) {
+        Booking existingBooking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        validateNoApprovedConflict(
+                booking.getResourceId(),
+                booking.getDate(),
+                booking.getStartTime(),
+                booking.getEndTime(),
+                id);
+
+        existingBooking.setResourceId(booking.getResourceId());
+        existingBooking.setDate(booking.getDate());
+        existingBooking.setStartTime(booking.getStartTime());
+        existingBooking.setEndTime(booking.getEndTime());
+        existingBooking.setPurpose(booking.getPurpose());
+        existingBooking.setStudentId(booking.getStudentId());
+        existingBooking.setDepartment(booking.getDepartment());
+
+        if (booking.getStatus() != null) {
+            existingBooking.setStatus(booking.getStatus());
+        }
+
+        return bookingRepository.save(existingBooking);
     }
 
     @Override
@@ -77,16 +96,40 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> existingBookings = bookingRepository
                 .findByResourceIdAndDate(request.getResourceId(), request.getDate());
 
-        // Check for time conflicts
-        for (Booking b : existingBookings) {
-            if (b.getStatus() == BookingStatus.APPROVED || b.getStatus() == BookingStatus.PENDING) {
-                if (request.getStartTime().isBefore(b.getEndTime()) &&
-                    request.getEndTime().isAfter(b.getStartTime())) {
-                    return new AvailabilityResponse(false, "Time slot is already booked", b);
-                }
+        for (Booking booking : existingBookings) {
+            if (!isApprovedBlockingBooking(booking, request.getCurrentBookingId())) {
+                continue;
+            }
+
+            if (request.getStartTime().isBefore(booking.getEndTime()) &&
+                request.getEndTime().isAfter(booking.getStartTime())) {
+                return new AvailabilityResponse(false, "Resource already has an approved booking for this time slot.", booking);
             }
         }
 
         return new AvailabilityResponse(true, "Time slot is available");
+    }
+
+    private void validateNoApprovedConflict(String resourceId, java.time.LocalDate date, java.time.LocalTime startTime,
+            java.time.LocalTime endTime, String currentBookingId) {
+        List<Booking> existingBookings = bookingRepository.findByResourceIdAndDate(resourceId, date);
+
+        for (Booking booking : existingBookings) {
+            if (!isApprovedBlockingBooking(booking, currentBookingId)) {
+                continue;
+            }
+
+            if (startTime.isBefore(booking.getEndTime()) && endTime.isAfter(booking.getStartTime())) {
+                throw new BookingConflictException("Resource already has an approved booking for this time slot.");
+            }
+        }
+    }
+
+    private boolean isApprovedBlockingBooking(Booking booking, String currentBookingId) {
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            return false;
+        }
+
+        return currentBookingId == null || !currentBookingId.equals(booking.getId());
     }
 }
