@@ -1,0 +1,207 @@
+.ticket-form-container {
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+  min-height: 100vh;
+  padding: 40px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ticket-form-card {
+  background: white;
+  border: 1px solid var(--bluish-border);
+  border-radius: 12px;
+  max-width: 700px;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+}
+
+.ticket-form-card .card-header {
+  background: linear-gradient(135deg, var(--bluish-accent) 0%, rgba(99, 102, 241, 0.05) 100%);
+  border-bottom: 2px solid var(--bluish-border);
+  display: block;
+  padding: 30px;
+}
+
+.ticket-form-card h2 {
+  margin: 0 0 8px 0;
+  color: var(--bluish-primary);
+  font-size: 28px;
+}
+
+.subtitle {
+  color: var(--text);
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.7;
+}
+
+.form-content {
+  padding: 30px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-h);
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 15px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--bluish-border);
+  border-radius: 8px;
+  background: var(--bg-light);
+  color: var(--text-h);
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--bluish-primary);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text);
+  opacity: 0.5;
+}
+
+.char-count {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  color: var(--text);
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.file-upload {
+  border: 2px dashed var(--bluish-border);
+  border-radius: 8px;
+  padding: 20px;
+  background: var(--bluish-accent);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.file-upload:hover {
+  border-color: var(--bluish-primary);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.file-upload .btn-secondary {
+  margin: 0 auto;
+}
+
+.image-preview {
+  margin-top: 16px;
+  text-align: left;
+}
+
+.image-count {
+  color: var(--bluish-primary);
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.image-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.image-item {
+  background: white;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--bluish-border);
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.form-actions {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.form-actions .btn {
+  width: 100%;
+  justify-content: center;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.form-actions .btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.help-text {
+  text-align: center;
+  color: var(--text);
+  font-size: 13px;
+  margin-top: 16px;
+  opacity: 0.7;
+}
+
+/* Alert Overrides for Form */
+.ticket-form-card .alert {
+  border-radius: 8px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .ticket-form-card {
+    border-radius: 8px;
+  }
+
+  .ticket-form-card .card-header {
+    padding: 20px;
+  }
+
+  .form-content {
+    padding: 20px;
+  }
+
+  .ticket-form-card h2 {
+    font-size: 24px;
+  }
+}
