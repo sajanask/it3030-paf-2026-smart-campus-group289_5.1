@@ -1,10 +1,10 @@
-package com.backend.backend;
+package com.sliit.smartcampus;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class BackendApplicationTests {
+class SmartcampusApplicationTests {
 
 	@Test
 	void contextLoads() {
