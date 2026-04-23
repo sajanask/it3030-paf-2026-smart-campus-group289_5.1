@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { fetchTickets, fetchStats, deleteTicket } from '../../services/api'import './TicketList.css';import './TicketList.css'
+import React, { useState, useEffect, useCallback } from 'react';
+import { fetchTickets, fetchStats, deleteTicket } from '../../services/api';
+import './TicketList.css';
 
 const STATUS_FILTERS = [
   { label: 'All', value: '' },

@@ -55,9 +55,14 @@ public class Ticket {
     @Column(length = 500)
     private String rejectionReason;
 
+    /** * Requirement: Max 3 images per ticket for evidence.
+     * Categorized storage should be handled in the Service/Controller layer 
+     * by saving files to 'uploads/tickets/' as per your file structure.
+     */
     @ElementCollection
     @CollectionTable(name = "ticket_images", joinColumns = @JoinColumn(name = "ticket_id"))
     @Column(name = "image_url")
+    @Size(max = 3, message = "Maximum of 3 images allowed per ticket")
     private List<String> imageUrls = new ArrayList<>();
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
@@ -78,12 +83,14 @@ public class Ticket {
     @Column
     private LocalDateTime assignedAt;
 
+    // Enums aligned with assignment business logic 
     public enum Category { HARDWARE, PLUMBING, ELECTRICAL, CLEANING, SECURITY, INTERNET, FURNITURE, OTHER }
     public enum Priority { LOW, MEDIUM, HIGH, CRITICAL }
     public enum TicketStatus { OPEN, IN_PROGRESS, RESOLVED, CLOSED, REJECTED }
 
     public Ticket() {}
 
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
