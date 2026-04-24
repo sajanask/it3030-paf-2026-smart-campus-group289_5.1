@@ -1,34 +1,27 @@
 package com.sliit.smartcampus.entity;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "resources")
+@Document(collection = "resources")
 public class Resource {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
     private String type; // e.g., LECTURE_HALL, LAB, MEETING_ROOM, EQUIPMENT
 
-    @Column(nullable = false)
     private Integer capacity;
 
-    @Column(nullable = false)
     private String location;
 
-    @Column(name = "availability_windows")
     private String availabilityWindows; // e.g., "08:00 AM - 05:00 PM"
 
-    @Column(nullable = false)
     private String status; // ACTIVE / OUT_OF_SERVICE
 
-    // Default Constructor (Required by JPA)
+    // Default Constructor (Required by MongoDB)
     public Resource() {
     }
 
@@ -44,11 +37,11 @@ public class Resource {
 
     // --- Getters and Setters ---
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

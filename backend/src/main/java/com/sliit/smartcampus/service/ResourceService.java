@@ -18,41 +18,76 @@ public class ResourceService {
         this.resourceRepository = resourceRepository;
     }
 
-    // 1. Add a new resource to the catalogue
     public Resource addResource(Resource resource) {
-        // By default, a new resource should probably be ACTIVE
-        if (resource.getStatus() == null) {
+        validateResource(resource);
+        normalizeResource(resource);
+
+        if (resource.getStatus() == null || resource.getStatus().isBlank()) {
             resource.setStatus("ACTIVE");
         }
         return resourceRepository.save(resource);
     }
 
-    // 2. Get absolutely everything (for the main admin dashboard)
     public List<Resource> getAllResources() {
         return resourceRepository.findAll();
     }
 
-    // 3. Get a specific resource by its ID
-    public Optional<Resource> getResourceById(Long id) {
+    public Optional<Resource> getResourceById(String id) {
         return resourceRepository.findById(id);
     }
 
-    // 4. Filter resources by Type (using the magic query we wrote earlier!)
     public List<Resource> getResourcesByType(String type) {
-        return resourceRepository.findByType(type);
+        return resourceRepository.findByType(type == null ? null : type.trim().toUpperCase());
     }
 
-    // 5. Update a resource's status (e.g., Member 3's ticketing system might call this 
-    // to set a projector to OUT_OF_SERVICE if it breaks)
-    public Resource updateResourceStatus(Long id, String newStatus) {
-        Optional<Resource> existingResource = resourceRepository.findById(id);
-        
-        if (existingResource.isPresent()) {
-            Resource resource = existingResource.get();
-            resource.setStatus(newStatus);
-            return resourceRepository.save(resource);
-        } else {
+    public Resource updateResourceStatus(String id, String newStatus) {
+        Resource resource = resourceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Resource not found with ID: " + id));
+
+        if (newStatus == null || newStatus.isBlank()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+
+        resource.setStatus(newStatus.trim().toUpperCase());
+        return resourceRepository.save(resource);
+    }
+
+    public void deleteResource(String id) {
+        if (!resourceRepository.existsById(id)) {
             throw new RuntimeException("Resource not found with ID: " + id);
+        }
+
+        resourceRepository.deleteById(id);
+    }
+
+    private void validateResource(Resource resource) {
+        if (resource == null) {
+            throw new IllegalArgumentException("Resource payload is required");
+        }
+        if (resource.getName() == null || resource.getName().isBlank()) {
+            throw new IllegalArgumentException("Resource name is required");
+        }
+        if (resource.getType() == null || resource.getType().isBlank()) {
+            throw new IllegalArgumentException("Resource type is required");
+        }
+        if (resource.getLocation() == null || resource.getLocation().isBlank()) {
+            throw new IllegalArgumentException("Resource location is required");
+        }
+        if (resource.getCapacity() == null || resource.getCapacity() < 0) {
+            throw new IllegalArgumentException("Resource capacity must be zero or greater");
+        }
+    }
+
+    private void normalizeResource(Resource resource) {
+        resource.setName(resource.getName().trim());
+        resource.setType(resource.getType().trim().toUpperCase());
+        resource.setLocation(resource.getLocation().trim());
+
+        if (resource.getAvailabilityWindows() != null) {
+            resource.setAvailabilityWindows(resource.getAvailabilityWindows().trim());
+        }
+        if (resource.getStatus() != null) {
+            resource.setStatus(resource.getStatus().trim().toUpperCase());
         }
     }
 }

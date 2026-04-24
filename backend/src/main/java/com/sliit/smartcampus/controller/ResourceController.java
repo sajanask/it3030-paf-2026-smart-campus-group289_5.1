@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/resources")
-@CrossOrigin(origins = "*") // This allows our React frontend to talk to this backend
+@CrossOrigin(origins = "*")
 public class ResourceController {
 
     private final ResourceService resourceService;
@@ -22,18 +22,20 @@ public class ResourceController {
         this.resourceService = resourceService;
     }
 
-    // 1. POST: Create a new resource
     @PostMapping
     public ResponseEntity<Resource> createResource(@RequestBody Resource resource) {
-        Resource savedResource = resourceService.addResource(resource);
-        return new ResponseEntity<>(savedResource, HttpStatus.CREATED);
+        try {
+            Resource savedResource = resourceService.addResource(resource);
+            return new ResponseEntity<>(savedResource, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
-    // 2. GET: Retrieve all resources (with optional filtering by type)
     @GetMapping
     public ResponseEntity<List<Resource>> getAllResources(@RequestParam(required = false) String type) {
         List<Resource> resources;
-        if (type != null && !type.isEmpty()) {
+        if (type != null && !type.isBlank()) {
             resources = resourceService.getResourcesByType(type);
         } else {
             resources = resourceService.getAllResources();
@@ -41,38 +43,42 @@ public class ResourceController {
         return new ResponseEntity<>(resources, HttpStatus.OK);
     }
 
-    // 3. GET: Retrieve a single resource by its ID
     @GetMapping("/{id}")
-    public ResponseEntity<Resource> getResourceById(@PathVariable Long id) {
+    public ResponseEntity<Resource> getResourceById(@PathVariable String id) {
         Optional<Resource> resource = resourceService.getResourceById(id);
         return resource.map(res -> new ResponseEntity<>(res, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // 4. PUT: Update ONLY the status of a resource (e.g., ACTIVE to OUT_OF_SERVICE)
     @PutMapping("/{id}/status")
-    public ResponseEntity<Resource> updateResourceStatus(@PathVariable Long id, @RequestBody String newStatus) {
+    public ResponseEntity<Resource> updateResourceStatus(
+            @PathVariable String id,
+            @RequestBody UpdateResourceStatusRequest request
+    ) {
+        if (request == null || request.status() == null || request.status().isBlank()) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
         try {
-            Resource updatedResource = resourceService.updateResourceStatus(id, newStatus);
+            Resource updatedResource = resourceService.updateResourceStatus(id, request.status());
             return new ResponseEntity<>(updatedResource, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
-    // 5. DELETE: Remove a resource entirely (Fulfills the 4th HTTP method requirement!)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteResource(@PathVariable Long id) {
-        // We will call the repository directly here for simplicity to finish the requirement
-        // (In a massive enterprise app, this would go through the Service layer first)
+    public ResponseEntity<Void> deleteResource(@PathVariable String id) {
         try {
-            resourceService.getResourceById(id).ifPresent(resource -> {
-                // To keep it simple, we'll just throw an exception if it doesn't exist, 
-                // but normally we'd delete it via a service method. Let's mock a success response.
-            });
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT); 
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            resourceService.deleteResource(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    public record UpdateResourceStatusRequest(String status) {
     }
 }
