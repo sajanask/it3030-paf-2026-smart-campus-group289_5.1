@@ -29,6 +29,9 @@ backend/*.swo
 backend/.env
 backend/.env.local
 backend/application-local.properties
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-secrets.properties
+backend/src/main/resources/application-*.local.properties
 
 # Frontend - Dependencies
 frontend/node_modules/

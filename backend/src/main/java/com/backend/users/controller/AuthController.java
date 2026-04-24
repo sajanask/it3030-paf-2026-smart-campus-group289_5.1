@@ -68,7 +68,9 @@ public class AuthController {
                     "Invalid password");
         }
 
-        String token = jwtUtils.generateToken(existing.getEmail());
+        String token = jwtUtils.generateToken(
+                existing.getEmail(),
+                existing.getRole().name());
 
         Map<String, String> response = new HashMap<>();
         response.put("token", token);
