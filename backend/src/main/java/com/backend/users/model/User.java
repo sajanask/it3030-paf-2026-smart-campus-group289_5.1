@@ -1,21 +1,19 @@
 package com.backend.users.model;
 
 import com.backend.roles.model.Role;
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "users")
+@Document(collection = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     private String name;
     private String email;
     private String password;
 
-    @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
     public User() {}
@@ -28,7 +26,7 @@ public class User {
     }
 
     // Getters & Setters
-    public Long getId() { return id; }
+    public String getId() { return id; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
