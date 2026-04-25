@@ -1,120 +1,109 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import NotificationBell from './components/notifications/NotificationBell'
+import { useNotifications } from './hooks/useNotifications'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [draftUserId, setDraftUserId] = useState(
+    () => localStorage.getItem('smartcampusUserId') ?? '',
+  )
+  const [activeUserId, setActiveUserId] = useState(
+    () => localStorage.getItem('smartcampusUserId') ?? '',
+  )
+  const [isBellOpen, setIsBellOpen] = useState(false)
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    error,
+    refreshNotifications,
+    markAsRead,
+  } = useNotifications(activeUserId)
+
+  function connectInbox(event) {
+    event.preventDefault()
+    localStorage.setItem('smartcampusUserId', draftUserId)
+    setActiveUserId(draftUserId)
+    setIsBellOpen(false)
+  }
+
+  async function handleMarkAsRead(notificationId) {
+    try {
+      await markAsRead(notificationId)
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+    <div className="app-shell">
+      <header className="hero-panel">
+        <div className="hero-copy">
+          <p className="eyebrow">Smart Campus</p>
+          <h1>Notification Center</h1>
+          <p className="hero-text">
+            Track booking approvals, booking conflicts, and incoming requests from one
+            bell in the header.
           </p>
         </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
+        <NotificationBell
+          notifications={notifications}
+          unreadCount={unreadCount}
+          isLoading={isLoading}
+          error={error}
+          isOpen={isBellOpen}
+          onToggle={() => setIsBellOpen((open) => !open)}
+          onRefresh={refreshNotifications}
+          onMarkAsRead={handleMarkAsRead}
+        />
+      </header>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <main className="dashboard-grid">
+        <section className="panel">
+          <p className="eyebrow">Connect</p>
+          <h2>Choose a user inbox</h2>
+          <p className="panel-text">
+            Paste the Mongo user id you want to monitor, then the bell will show the unread
+            count and latest notifications for that user.
+          </p>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          <form className="user-form" onSubmit={connectInbox}>
+            <label className="field">
+              <span>User ID</span>
+              <input
+                value={draftUserId}
+                onChange={(event) => setDraftUserId(event.target.value)}
+                placeholder="Enter a Mongo user id"
+              />
+            </label>
+
+            <button type="submit" className="primary-button">
+              Load notifications
+            </button>
+          </form>
+        </section>
+
+        <section className="panel accent-panel">
+          <p className="eyebrow">Live Status</p>
+          <h2>Bell summary</h2>
+          <div className="stats">
+            <div className="stat-card">
+              <span>Active user</span>
+              <strong>{activeUserId || 'Not connected'}</strong>
+            </div>
+            <div className="stat-card">
+              <span>Unread count</span>
+              <strong>{unreadCount}</strong>
+            </div>
+            <div className="stat-card">
+              <span>Total notifications</span>
+              <strong>{notifications.length}</strong>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
   )
 }
 
