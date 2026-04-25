@@ -354,13 +354,6 @@ function App() {
       addNotification(NOTIFICATION_TYPES.ERROR, 'Save Failed', 'Unable to save the resource. Please try again.');
     }
   };
-      setIsDrawerOpen(false);
-      setDrawerTab('identity'); 
-    } catch (error) {
-      console.error('Failed to save.', error);
-      setConnectionError('Unable to save the resource. Check the backend API and MongoDB connection.');
-    }
-  };
 
   const filtered = resources.filter(res => 
     ((res.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || (res.location || '').toLowerCase().includes(searchTerm.toLowerCase())) &&
