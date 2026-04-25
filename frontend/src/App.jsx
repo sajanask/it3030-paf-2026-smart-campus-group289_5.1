@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, Users, Box, LayoutDashboard, Clock, X, Plus, Info, Map as MapIcon, Cpu, Activity, TrendingUp, Battery, Wifi, Server, Calendar, AlertTriangle, CheckCircle, BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Clock3, Zap, Bell, Trash2, Check, AlertOctagon, Info as InfoIcon, XCircle } from 'lucide-react';
+import { Search, MapPin, Users, Box, LayoutDashboard, Clock, X, Plus, Info, Map as MapIcon, Cpu, Activity, TrendingUp, Battery, Wifi, Server, Calendar, AlertTriangle, CheckCircle, BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Clock3, Zap, Bell, Trash2, Check, AlertOctagon, Info as InfoIcon, XCircle, Timer, Save, RotateCcw, Settings, Volume2, VolumeX } from 'lucide-react';
 import FloatingLines from './FloatingLines';
 import RotatingText from './RotatingText';
 import './App.css';
@@ -13,7 +13,9 @@ const NOTIFICATION_TYPES = {
   SUCCESS: 'success',
   ERROR: 'error',
   WARNING: 'warning',
-  INFO: 'info'
+  INFO: 'info',
+  REMINDER: 'reminder',
+  SCHEDULED: 'scheduled'
 };
 
 // Generate unique ID
@@ -26,8 +28,36 @@ const createNotification = (type, title, message) => ({
   title,
   message,
   timestamp: new Date(),
-  read: false
+  read: false,
+  pinned: false,
+  scheduledTime: null
 });
+
+// Local Storage Keys
+const STORAGE_KEYS = {
+  NOTIFICATIONS: 'campus_notifications',
+  REMINDERS: 'campus_reminders',
+  SETTINGS: 'campus_notification_settings'
+};
+
+// Load from localStorage
+const loadFromStorage = (key, defaultValue) => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+// Save to localStorage
+const saveToStorage = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.error('Storage save error:', e);
+  }
+};
 
 function App() {
   const [resources, setResources] = useState([]);
@@ -39,17 +69,85 @@ function App() {
   const [drawerTab, setDrawerTab] = useState('identity');
   const [selectedView, setSelectedView] = useState('dashboard');
   
-  // Notification state
-  const [notifications, setNotifications] = useState([]);
+  // Notification state - Load from localStorage
+  const [notifications, setNotifications] = useState(() => loadFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationPanel, setNotificationPanel] = useState(false);
   
+  // Reminders state
+  const [reminders, setReminders] = useState(() => loadFromStorage(STORAGE_KEYS.REMINDERS, []));
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderForm, setReminderForm] = useState({ title: '', message: '', interval: 30 });
+  
+  // Notification settings
+  const [notificationSettings, setNotificationSettings] = useState(() => 
+    loadFromStorage(STORAGE_KEYS.SETTINGS, { 
+      soundEnabled: true, 
+      autoDismiss: true, 
+      dismissDuration: 5000 
+    })
+  );
+  
   const [formData, setFormData] = useState({ name: '', type: 'LECTURE_HALL', capacity: '', location: '', availabilityWindows: '08:00 AM - 05:00 PM' });
 
+  // Save notifications to localStorage whenever they change
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications);
+  }, [notifications]);
+
+  // Save reminders to localStorage
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.REMINDERS, reminders);
+  }, [reminders]);
+
+  // Save settings to localStorage
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.SETTINGS, notificationSettings);
+  }, [notificationSettings]);
+
   // Add notification function
-  const addNotification = (type, title, message) => {
+  const addNotification = useCallback((type, title, message) => {
     const newNotification = createNotification(type, title, message);
-    setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep max 50 notifications
+    setNotifications(prev => {
+      const updated = [newNotification, ...prev].slice(0, 50);
+      return updated;
+    });
+    
+    // Play sound if enabled
+    if (notificationSettings.soundEnabled) {
+      playNotificationSound(type);
+    }
+  }, [notificationSettings.soundEnabled]);
+
+  // Play notification sound
+  const playNotificationSound = (type) => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Different tones for different types
+      const frequencies = {
+        success: 800,
+        error: 300,
+        warning: 500,
+        info: 600,
+        reminder: 700
+      };
+      
+      oscillator.frequency.value = frequencies[type] || 600;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (e) {
+      // Audio not supported
+    }
   };
 
   // Mark notification as read
@@ -62,6 +160,11 @@ function App() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
+  // Pin notification
+  const pinNotification = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, pinned: !n.pinned } : n));
+  };
+
   // Delete notification
   const deleteNotification = (id) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
@@ -72,8 +175,87 @@ function App() {
     setNotifications([]);
   };
 
+  // Undo clear - restore last cleared
+  const [lastClearedNotifications, setLastClearedNotifications] = useState([]);
+  const undoClear = () => {
+    if (lastClearedNotifications.length > 0) {
+      setNotifications(prev => [...lastClearedNotifications, ...prev]);
+      setLastClearedNotifications([]);
+      addNotification(NOTIFICATION_TYPES.SUCCESS, 'Notifications Restored', 'Previously cleared notifications have been restored');
+    }
+  };
+
   // Get unread count
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Get pinned count
+  const pinnedCount = notifications.filter(n => n.pinned).length;
+
+  // Reminder functions
+  const addReminder = () => {
+    if (!reminderForm.title || !reminderForm.message) {
+      addNotification(NOTIFICATION_TYPES.WARNING, 'Validation Error', 'Please fill in reminder title and message');
+      return;
+    }
+    
+    const newReminder = {
+      id: generateId(),
+      ...reminderForm,
+      enabled: true,
+      createdAt: new Date(),
+      lastTriggered: null
+    };
+    
+    setReminders(prev => [...prev, newReminder]);
+    setReminderForm({ title: '', message: '', interval: 30 });
+    setShowReminderModal(false);
+    addNotification(NOTIFICATION_TYPES.SUCCESS, 'Reminder Set', `"${reminderForm.title}" has been scheduled`);
+  };
+
+  const deleteReminder = (id) => {
+    setReminders(prev => prev.filter(r => r.id !== id));
+  };
+
+  const toggleReminder = (id) => {
+    setReminders(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
+  };
+
+  // Check reminders periodically
+  useEffect(() => {
+    const checkReminders = setInterval(() => {
+      const now = new Date();
+      reminders.forEach(reminder => {
+        if (!reminder.enabled) return;
+        
+        const lastTriggered = reminder.lastTriggered ? new Date(reminder.lastTriggered) : new Date(reminder.createdAt);
+        const timeDiff = (now - lastTriggered) / 60000; // minutes
+        
+        if (timeDiff >= reminder.interval) {
+          addNotification(NOTIFICATION_TYPES.REMINDER, reminder.title, reminder.message);
+          setReminders(prev => prev.map(r => 
+            r.id === reminder.id ? { ...r, lastTriggered: now } : r
+          ));
+        }
+      });
+    }, 60000); // Check every minute
+    
+    return () => clearInterval(checkReminders);
+  }, [reminders, addNotification]);
+
+  // Quick reminder buttons
+  const setQuickReminder = (minutes, title) => {
+    const reminder = {
+      id: generateId(),
+      title: title,
+      message: `Quick ${minutes} minute reminder`,
+      interval: minutes,
+      enabled: true,
+      createdAt: new Date(),
+      lastTriggered: null
+    };
+    setReminders(prev => [...prev, reminder]);
+    addNotification(NOTIFICATION_TYPES.SUCCESS, 'Quick Reminder Set', `${minutes} minute reminder for "${title}" has been added`);
+  };
 
   // Get notification icon
   const getNotificationIcon = (type) => {
@@ -305,10 +487,34 @@ function App() {
                   <h3><Bell size={18} /> Notifications</h3>
                   <div className="notification-panel-actions">
                     <button onClick={markAllAsRead} title="Mark all as read"><Check size={16} /></button>
-                    <button onClick={clearAllNotifications} title="Clear all"><Trash2 size={16} /></button>
+                    <button onClick={() => { setLastClearedNotifications(notifications); clearAllNotifications(); }} title="Clear all"><Trash2 size={16} /></button>
                     <button onClick={() => setNotificationPanel(false)}><X size={16} /></button>
                   </div>
                 </div>
+                
+                {/* Notification Tabs */}
+                <div className="notification-tabs">
+                  <button className={`notification-tab ${selectedView === 'dashboard' ? 'active' : ''}`} onClick={() => setSelectedView('dashboard')}>
+                    <Bell size={14} /> All ({notifications.length})
+                  </button>
+                  <button className={`notification-tab ${selectedView === 'analytics' ? 'active' : ''}`} onClick={() => setSelectedView('analytics')}>
+                    <Timer size={14} /> Reminders ({reminders.length})
+                  </button>
+                  <button className={`notification-tab ${selectedView === 'resources' ? 'active' : ''}`} onClick={() => setSelectedView('resources')}>
+                    <Settings size={14} /> Settings
+                  </button>
+                </div>
+                
+                {/* Quick Reminder Buttons */}
+                <div className="quick-reminder-bar">
+                  <span className="quick-reminder-label">Quick Reminder:</span>
+                  <button onClick={() => setQuickReminder(5, 'Stand up')}>5m Stand</button>
+                  <button onClick={() => setQuickReminder(15, 'Break')}>15m Break</button>
+                  <button onClick={() => setQuickReminder(30, 'Hydrate')}>30m Hydrate</button>
+                  <button onClick={() => setQuickReminder(60, 'Lunch')}>60m Lunch</button>
+                  <button className="add-reminder-btn" onClick={() => setShowReminderModal(true)}><Plus size={14} /></button>
+                </div>
+                
                 <div className="notification-list">
                   {notifications.length === 0 ? (
                     <div className="notification-empty">
@@ -319,7 +525,7 @@ function App() {
                     notifications.map(notification => (
                       <motion.div 
                         key={notification.id} 
-                        className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+                        className={`notification-item ${notification.read ? 'read' : 'unread'} ${notification.pinned ? 'pinned' : ''}`}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
@@ -329,11 +535,17 @@ function App() {
                           {getNotificationIcon(notification.type)}
                         </div>
                         <div className="notification-content">
-                          <div className="notification-title">{notification.title}</div>
+                          <div className="notification-title">
+                            {notification.pinned && <span className="pin-indicator">📌</span>}
+                            {notification.title}
+                          </div>
                           <div className="notification-message">{notification.message}</div>
                           <div className="notification-time">{formatTimestamp(notification.timestamp)}</div>
                         </div>
                         <div className="notification-actions">
+                          <button onClick={() => pinNotification(notification.id)} title={notification.pinned ? "Unpin" : "Pin"}>
+                            {notification.pinned ? "📌" : "📍"}
+                          </button>
                           {!notification.read && <button onClick={() => markAsRead(notification.id)} title="Mark as read"><Check size={14} /></button>}
                           <button onClick={() => deleteNotification(notification.id)} title="Delete"><X size={14} /></button>
                         </div>
@@ -341,7 +553,100 @@ function App() {
                     ))
                   )}
                 </div>
+                
+                {/* Reminders Section */}
+                {selectedView === 'analytics' && (
+                  <div className="reminders-section">
+                    <h4><Timer size={16} /> Active Reminders</h4>
+                    {reminders.length === 0 ? (
+                      <p className="no-reminders">No reminders set. Use quick buttons above or add custom reminders.</p>
+                    ) : (
+                      <div className="reminders-list">
+                        {reminders.map(reminder => (
+                          <div key={reminder.id} className={`reminder-item ${!reminder.enabled ? 'disabled' : ''}`}>
+                            <div className="reminder-toggle">
+                              <button onClick={() => toggleReminder(reminder.id)}>
+                                {reminder.enabled ? '🔔' : '🔕'}
+                              </button>
+                            </div>
+                            <div className="reminder-info">
+                              <div className="reminder-title">{reminder.title}</div>
+                              <div className="reminder-meta">Every {reminder.interval} min • {reminder.message}</div>
+                            </div>
+                            <button className="reminder-delete" onClick={() => deleteReminder(reminder.id)}><X size={14} /></button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Settings Section */}
+                {selectedView === 'resources' && (
+                  <div className="settings-section">
+                    <h4><Settings size={16} /> Notification Settings</h4>
+                    <div className="settings-list">
+                      <div className="setting-item">
+                        <div className="setting-info">
+                          <span className="setting-label">Sound</span>
+                          <span className="setting-desc">Play notification sounds</span>
+                        </div>
+                        <button 
+                          className={`setting-toggle ${notificationSettings.soundEnabled ? 'on' : 'off'}`}
+                          onClick={() => setNotificationSettings(prev => ({ ...prev, soundEnabled: !prev.soundEnabled }))}
+                        >
+                          {notificationSettings.soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                        </button>
+                      </div>
+                      <div className="setting-item">
+                        <div className="setting-info">
+                          <span className="setting-label">Auto-dismiss</span>
+                          <span className="setting-desc">Automatically dismiss toasts</span>
+                        </div>
+                        <button 
+                          className={`setting-toggle ${notificationSettings.autoDismiss ? 'on' : 'off'}`}
+                          onClick={() => setNotificationSettings(prev => ({ ...prev, autoDismiss: !prev.autoDismiss }))}
+                        >
+                          {notificationSettings.autoDismiss ? '✅' : '❌'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Reminder Modal */}
+          <AnimatePresence>
+            {showReminderModal && (
+              <>
+                <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowReminderModal(false)} />
+                <motion.div className="reminder-modal" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
+                  <div className="modal-header">
+                    <h3><Timer size={18} /> Set Custom Reminder</h3>
+                    <button onClick={() => setShowReminderModal(false)}><X size={18} /></button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="input-group">
+                      <label>Reminder Title</label>
+                      <input type="text" placeholder="e.g. Meeting Reminder" value={reminderForm.title} onChange={e => setReminderForm(prev => ({ ...prev, title: e.target.value }))} />
+                    </div>
+                    <div className="input-group">
+                      <label>Message</label>
+                      <input type="text" placeholder="e.g. Team standup in 5 minutes" value={reminderForm.message} onChange={e => setReminderForm(prev => ({ ...prev, message: e.target.value }))} />
+                    </div>
+                    <div className="input-group">
+                      <label>Interval (minutes)</label>
+                      <input type="number" min="1" value={reminderForm.interval} onChange={e => setReminderForm(prev => ({ ...prev, interval: parseInt(e.target.value) || 30 }))} />
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button className="secondary-action-btn" onClick={() => setShowReminderModal(false)}>Cancel</button>
+                    <button className="submit-action-btn" onClick={addReminder}>Set Reminder</button>
+                  </div>
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
 
