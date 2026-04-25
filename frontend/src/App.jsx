@@ -1,9 +1,13 @@
 import { useState } from 'react'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import NotificationBell from './components/notifications/NotificationBell'
 import { useNotifications } from './hooks/useNotifications'
+import BookingPage from './modules/booking/pages/BookingPage'
+import MyBookingsPage from './modules/booking/pages/MyBookingsPage'
+import AdminBookingPage from './modules/booking/pages/AdminBookingPage'
 import './App.css'
 
-function App() {
+function NotificationCenter() {
   const [draftUserId, setDraftUserId] = useState(
     () => localStorage.getItem('smartcampusUserId') ?? '',
   )
@@ -36,7 +40,7 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="notification-home">
       <header className="hero-panel">
         <div className="hero-copy">
           <p className="eyebrow">Smart Campus</p>
@@ -107,4 +111,27 @@ function App() {
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <div className="app-shell">
+        <div className="app-background" aria-hidden="true">
+          <span className="app-orb app-orb-one" />
+          <span className="app-orb app-orb-two" />
+          <span className="app-orb app-orb-three" />
+          <span className="app-grid" />
+          <span className="app-glow" />
+        </div>
+
+        <div className="app-content">
+          <Routes>
+            <Route path="/" element={<NotificationCenter />} />
+            <Route path="/bookings" element={<BookingPage />} />
+            <Route path="/my-bookings" element={<MyBookingsPage />} />
+            <Route path="/admin/bookings" element={<AdminBookingPage />} />
+          </Routes>
+        </div>
+      </div>
+    </BrowserRouter>
+  )
+}
