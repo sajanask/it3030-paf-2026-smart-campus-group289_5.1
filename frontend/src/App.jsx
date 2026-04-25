@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, Users, Box, LayoutDashboard, Clock, X, Plus, Info, Map as MapIcon, Cpu } from 'lucide-react';
+import { Search, MapPin, Users, Box, LayoutDashboard, Clock, X, Plus, Info, Map as MapIcon, Cpu, Activity, TrendingUp, Battery, Wifi, Server, Calendar, AlertTriangle, CheckCircle, BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Clock3, Zap } from 'lucide-react';
 import FloatingLines from './FloatingLines';
 import RotatingText from './RotatingText';
 import './App.css';
@@ -16,6 +16,7 @@ function App() {
   
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState('identity');
+  const [selectedView, setSelectedView] = useState('dashboard');
   
   const [formData, setFormData] = useState({ name: '', type: 'LECTURE_HALL', capacity: '', location: '', availabilityWindows: '08:00 AM - 05:00 PM' });
 
@@ -61,6 +62,37 @@ function App() {
   );
 
   const totalCapacity = resources.reduce((acc, curr) => acc + (parseInt(curr.capacity) || 0), 0);
+  
+  // Analytics calculations
+  const typeBreakdown = resources.reduce((acc, res) => {
+    acc[res.type] = (acc[res.type] || 0) + 1;
+    return acc;
+  }, {});
+  
+  const statusBreakdown = resources.reduce((acc, res) => {
+    acc[res.status] = (acc[res.status] || 0) + 1;
+    return acc;
+  }, {});
+  
+  const locationBreakdown = resources.reduce((acc, res) => {
+    const loc = res.location?.split(',')[0] || 'Unknown';
+    acc[loc] = (acc[loc] || 0) + 1;
+    return acc;
+  }, {});
+  
+  const avgCapacity = resources.length > 0 ? Math.round(totalCapacity / resources.length) : 0;
+  const activeResources = resources.filter(r => r.status === 'ACTIVE').length;
+  const inactiveResources = resources.filter(r => r.status === 'OUT_OF_SERVICE').length;
+  
+  const getTypeIcon = (type) => {
+    switch(type) {
+      case 'LECTURE_HALL': return <Users size={16} />;
+      case 'LAB': return <Server size={16} />;
+      case 'MEETING_ROOM': return <MapPin size={16} />;
+      case 'EQUIPMENT': return <Cpu size={16} />;
+      default: return <Box size={16} />;
+    }
+  };
 
   return (
     <div className="app-wrapper">
@@ -86,8 +118,26 @@ function App() {
             <span>CampusHub</span>
           </div>
           <nav className="nav-menu">
-            <button className="nav-btn active"><LayoutDashboard size={18} /> Asset Dashboard</button>
+            <button className={`nav-btn ${selectedView === 'dashboard' ? 'active' : ''}`} onClick={() => setSelectedView('dashboard')}><LayoutDashboard size={18} /> Asset Dashboard</button>
+            <button className={`nav-btn ${selectedView === 'analytics' ? 'active' : ''}`} onClick={() => setSelectedView('analytics')}><BarChart3 size={18} /> Analytics</button>
+            <button className={`nav-btn ${selectedView === 'resources' ? 'active' : ''}`} onClick={() => setSelectedView('resources')}><Server size={18} /> Resources</button>
           </nav>
+          
+          {/* Sidebar Stats */}
+          <div className="sidebar-stats">
+            <div className="sidebar-stat">
+              <span className="sidebar-stat-label">Total Assets</span>
+              <span className="sidebar-stat-value">{resources.length}</span>
+            </div>
+            <div className="sidebar-stat">
+              <span className="sidebar-stat-label">Active</span>
+              <span className="sidebar-stat-value active-count">{activeResources}</span>
+            </div>
+            <div className="sidebar-stat">
+              <span className="sidebar-stat-label">Capacity</span>
+              <span className="sidebar-stat-value">{totalCapacity}</span>
+            </div>
+          </div>
         </aside>
 
         {/* Main Content Area */}
@@ -110,31 +160,133 @@ function App() {
                   rotationInterval={3000}
                 />
               </h1>
-              <p className="subtitle">Maintain and provision campus assets across all sectors.</p>
+              <p className="subtitle">Maintain and provision campus assets across all sectors. Last updated: {new Date().toLocaleString()}</p>
             </div>
             <button className="primary-action-btn" onClick={() => setIsDrawerOpen(true)}>
               <Plus size={18} /> Provision Asset
             </button>
           </header>
 
-          {/* Bento Box Metrics View */}
+          {/* Bento Box Metrics View - Enhanced with More Stats */}
           <div className="bento-grid">
             <div className="bento-card stat-card">
+              <div className="stat-icon"><Box size={20} /></div>
               <span className="stat-title">Network Nodes</span>
               <span className="stat-value">{resources.length}</span>
+              <span className="stat-subtitle">Total registered assets</span>
             </div>
             <div className="bento-card stat-card">
-              <span className="stat-title">Total Capacity Limit</span>
+              <div className="stat-icon"><Users size={20} /></div>
+              <span className="stat-title">Total Capacity</span>
               <span className="stat-value">{totalCapacity} <span className="stat-sub">users</span></span>
+              <span className="stat-subtitle">Across all facilities</span>
             </div>
             <div className="bento-card health-card">
               <div className="health-header">
                 <span className="stat-title">System Health</span>
                 <div className="live-pulse"></div>
               </div>
-              <span className="health-status">100% Operational</span>
+              <span className="health-status">{resources.length > 0 ? Math.round((activeResources / resources.length) * 100) : 100}% Operational</span>
+              <div className="health-bar">
+                <div className="health-fill" style={{ width: `${resources.length > 0 ? (activeResources / resources.length) * 100 : 100}%` }}></div>
+              </div>
+            </div>
+            <div className="bento-card stat-card accent">
+              <div className="stat-icon"><TrendingUp size={20} /></div>
+              <span className="stat-title">Avg Utilization</span>
+              <span className="stat-value">{avgCapacity}</span>
+              <span className="stat-subtitle">Per resource average</span>
+            </div>
+            <div className="bento-card stat-card">
+              <div className="stat-icon"><CheckCircle size={20} /></div>
+              <span className="stat-title">Active</span>
+              <span className="stat-value">{activeResources}</span>
+              <span className="stat-subtitle">Currently operational</span>
+            </div>
+            <div className="bento-card stat-card warning">
+              <div className="stat-icon"><AlertTriangle size={20} /></div>
+              <span className="stat-title">Out of Service</span>
+              <span className="stat-value">{inactiveResources}</span>
+              <span className="stat-subtitle">Requires attention</span>
             </div>
           </div>
+
+          {/* Analytics Section - Type & Status Breakdown */}
+          {selectedView === 'analytics' && (
+            <motion.div className="analytics-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <h2 className="section-title"><Activity size={20} /> Resource Analytics</h2>
+              <div className="analytics-grid">
+                {/* Type Distribution */}
+                <div className="analytics-card">
+                  <h3><PieChart size={18} /> Classification Distribution</h3>
+                  <div className="distribution-list">
+                    {Object.entries(typeBreakdown).map(([type, count]) => (
+                      <div key={type} className="distribution-item">
+                        <div className="dist-label">{type.replace('_', ' ')}</div>
+                        <div className="dist-bar-container">
+                          <div className="dist-bar" style={{ width: `${(count / resources.length) * 100}%` }}></div>
+                        </div>
+                        <div className="dist-value">{count} <span className="dist-percent">({Math.round((count / resources.length) * 100)}%)</span></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Status Distribution */}
+                <div className="analytics-card">
+                  <h3><Battery size={18} /> Status Overview</h3>
+                  <div className="status-overview">
+                    <div className="status-item">
+                      <div className="status-indicator active"></div>
+                      <span>Active</span>
+                      <strong>{activeResources}</strong>
+                    </div>
+                    <div className="status-item">
+                      <div className="status-indicator inactive"></div>
+                      <span>Out of Service</span>
+                      <strong>{inactiveResources}</strong>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Location Distribution */}
+                <div className="analytics-card">
+                  <h3><MapPin size={18} /> Location Distribution</h3>
+                  <div className="location-list">
+                    {Object.entries(locationBreakdown).slice(0, 5).map(([loc, count]) => (
+                      <div key={loc} className="location-item">
+                        <span className="location-name">{loc}</span>
+                        <span className="location-count">{count} assets</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Capacity Analysis */}
+                <div className="analytics-card">
+                  <h3><BarChart3 size={18} /> Capacity Analysis</h3>
+                  <div className="capacity-stats">
+                    <div className="capacity-item">
+                      <span className="capacity-label">Total Capacity</span>
+                      <span className="capacity-value">{totalCapacity}</span>
+                    </div>
+                    <div className="capacity-item">
+                      <span className="capacity-label">Average per Resource</span>
+                      <span className="capacity-value">{avgCapacity}</span>
+                    </div>
+                    <div className="capacity-item">
+                      <span className="capacity-label">Largest Facility</span>
+                      <span className="capacity-value">{Math.max(...resources.map(r => r.capacity || 0), 0)}</span>
+                    </div>
+                    <div className="capacity-item">
+                      <span className="capacity-label">Smallest Facility</span>
+                      <span className="capacity-value">{Math.min(...resources.map(r => r.capacity || 0), 0) || 0}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Data Controls (Search & Styled Dropdown Filter) */}
           <div className="data-controls">
@@ -152,11 +304,15 @@ function App() {
                 <option value="EQUIPMENT">Equipment</option>
               </select>
             </div>
+            
+            <div className="view-toggle">
+              <span className="view-count">Showing {filtered.length} of {resources.length} resources</span>
+            </div>
           </div>
 
           {connectionError && <p className="subtitle">{connectionError}</p>}
 
-          {/* Resource Grid View */}
+          {/* Resource Grid View - Enhanced Cards */}
           <div className="resource-grid">
             <AnimatePresence>
               {filtered.map((res) => (
@@ -175,10 +331,23 @@ function App() {
                   <div className="card-footer">
                     <Clock size={15} /> {res.availabilityWindows}
                   </div>
+                  <div className="card-actions">
+                    <button className="card-action-btn" title="View Details"><Info size={14} /></button>
+                    <button className="card-action-btn" title="Edit"><Zap size={14} /></button>
+                  </div>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
+          
+          {/* Empty State */}
+          {filtered.length === 0 && (
+            <div className="empty-state">
+              <Box size={48} />
+              <h3>No Resources Found</h3>
+              <p>Try adjusting your search or filter criteria</p>
+            </div>
+          )}
         </main>
 
         {/* Split-Pane Drawer for Provisioning */}
