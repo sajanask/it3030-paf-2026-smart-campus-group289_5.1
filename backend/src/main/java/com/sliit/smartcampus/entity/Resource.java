@@ -1,6 +1,6 @@
 package com.sliit.smartcampus.entity;
 
-import org.springfyesramework.data.annotation.Id;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "resources")
@@ -26,7 +26,8 @@ public class Resource {
     }
 
     // Full Constructor for easy object creation
-    public Resource(String name, String type, Integer capacity, String location, String availabilityWindows, String status) {
+    public Resource(String name, String type, Integer capacity, String location,
+                    String availabilityWindows, String status) {
         this.name = name;
         this.type = type;
         this.capacity = capacity;
