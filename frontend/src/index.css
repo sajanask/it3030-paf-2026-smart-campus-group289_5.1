@@ -1,15 +1,28 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
+  --text: #5f566b;
+  --text-h: #120d1c;
+  --bg: #ffffff;
+  --bg-secondary: #faf7ff;
+  --border: #e8defa;
+  --code-bg: #f6f0ff;
+
+  --accent: #8b5cf6;
+  --accent-light: #c084fc;
+  --accent-dark: #6d28d9;
+
+  --secondary: #06b6d4;
+  --secondary-light: #67e8f9;
+
+  --success: #10b981;
+  --warning: #f59e0b;
+
+  --accent-bg: rgba(139, 92, 246, 0.12);
+  --accent-border: rgba(139, 92, 246, 0.45);
+  --social-bg: rgba(246, 240, 255, 0.7);
+
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(139, 92, 246, 0.08) 0 12px 20px -4px,
+    rgba(0, 0, 0, 0.06) 0 6px 10px -3px;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -19,7 +32,12 @@
   letter-spacing: 0.18px;
   color-scheme: light dark;
   color: var(--text);
-  background: var(--bg);
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #faf7ff 100%
+  );
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -32,17 +50,27 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
+    --text: #c5c7d0;
+    --text-h: #f8f7ff;
+    --bg: #12131a;
+    --bg-secondary: #1a1b24;
+    --border: #2e2f3f;
+    --code-bg: #1f2230;
+
     --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-light: #d8b4fe;
+    --accent-dark: #9333ea;
+
+    --secondary: #22d3ee;
+    --secondary-light: #67e8f9;
+
+    --accent-bg: rgba(192, 132, 252, 0.16);
     --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.65);
+
     --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+      rgba(0, 0, 0, 0.45) 0 12px 20px -4px,
+      rgba(192, 132, 252, 0.08) 0 6px 10px -3px;
   }
 
   #social .button-icon {
@@ -52,6 +80,7 @@
 
 body {
   margin: 0;
+  background: var(--bg);
 }
 
 #root {
@@ -64,48 +93,113 @@ body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle top gradient bar */
+#root::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 5px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    var(--secondary),
+    var(--accent-light)
+  );
 }
 
 h1,
 h2 {
   font-family: var(--heading);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-h);
 }
 
 h1 {
   font-size: 56px;
-  letter-spacing: -1.68px;
+  letter-spacing: -1.6px;
   margin: 32px 0;
+  background: linear-gradient(
+    90deg,
+    var(--accent-dark),
+    var(--accent),
+    var(--secondary)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
   @media (max-width: 1024px) {
     font-size: 36px;
     margin: 20px 0;
   }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
+
   @media (max-width: 1024px) {
     font-size: 20px;
   }
 }
+
 p {
   margin: 0;
+  color: var(--text);
 }
 
 code,
 .counter {
   font-family: var(--mono);
   display: inline-flex;
-  border-radius: 4px;
+  border-radius: 8px;
   color: var(--text-h);
 }
 
 code {
   font-size: 15px;
   line-height: 135%;
-  padding: 4px 8px;
+  padding: 6px 10px;
   background: var(--code-bg);
+  border: 1px solid var(--accent-border);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.05);
+}
+
+/* optional card style */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+/* optional button style */
+.button {
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    var(--secondary)
+  );
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
 }
