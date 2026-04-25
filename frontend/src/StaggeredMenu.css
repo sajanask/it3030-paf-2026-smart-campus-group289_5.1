@@ -1,0 +1,178 @@
+.staggered-menu-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.staggered-menu-wrapper.fixed-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 40;
+  overflow: hidden;
+}
+
+.staggered-menu-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Pushes button to the right */
+  padding: 40px 48px; /* Aligns with your main app padding */
+  background: transparent;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.staggered-menu-header > * {
+  pointer-events: auto;
+}
+
+.sm-logo { display: none; } /* Hidden to keep the UI clean */
+
+/* Make the tiny toggle text look like a proper professional button */
+.sm-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1;
+  transition: 0.2s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.sm-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.sm-toggle-textWrap {
+  position: relative;
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sm-toggle-textInner {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.sm-toggle-line { display: block; height: 1em; line-height: 1; }
+
+.sm-icon {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sm-icon-line {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.sm-line { display: none !important; }
+
+/* The Dark Glass Menu Panel */
+.staggered-menu-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(300px, 35vw, 450px);
+  height: 100%;
+  background: rgba(10, 15, 30, 0.85); /* Dark Glass */
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  padding: 8em 3em 3em 3em;
+  overflow-y: auto;
+  z-index: 10;
+  pointer-events: auto;
+  opacity: 0;
+}
+
+.sm-prelayers {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: clamp(300px, 35vw, 450px);
+  pointer-events: none; z-index: 5; opacity: 0;
+}
+
+.sm-prelayer {
+  position: absolute; top: 0; right: 0; height: 100%; width: 100%;
+  transform: translateX(0); opacity: 0;
+}
+
+.sm-panel-inner { flex: 1; display: flex; flex-direction: column; gap: 1.25rem; }
+
+.sm-panel-list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 1.5rem;
+}
+
+.sm-panel-itemWrap { position: relative; overflow: hidden; line-height: 1; }
+
+/* Professionalize the Menu Items */
+.sm-panel-item {
+  position: relative;
+  color: #ffffff; /* White text instead of black */
+  font-weight: 700;
+  font-size: 2.2rem; /* Shrunk down so it doesn't look overly huge */
+  cursor: pointer;
+  line-height: 1;
+  letter-spacing: -1px;
+  transition: color 0.2s;
+  display: inline-block;
+  text-decoration: none;
+  padding-right: 1.4em;
+}
+
+.sm-panel-itemLabel {
+  display: inline-block;
+  will-change: transform;
+  transform-origin: 50% 100%;
+}
+
+.sm-panel-item:hover { color: var(--sm-accent, #e947f5); }
+
+.sm-panel-list[data-numbering] { counter-reset: smItem; }
+
+.sm-panel-list[data-numbering] .sm-panel-item::after {
+  counter-increment: smItem;
+  content: counter(smItem, decimal-leading-zero);
+  position: absolute;
+  top: 0.1em;
+  right: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--sm-accent, #e947f5);
+  pointer-events: none;
+  opacity: var(--sm-num-opacity, 0);
+}

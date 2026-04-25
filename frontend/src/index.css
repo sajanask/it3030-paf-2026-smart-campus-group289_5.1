@@ -1,4 +1,31 @@
-@import "tailwindcss";
+:root {
+  --text: #5f566b;
+  --text-h: #120d1c;
+  --bg: #ffffff;
+  --bg-secondary: #faf7ff;
+  --border: #e8defa;
+  --code-bg: #f6f0ff;
+
+  --accent: #8b5cf6;
+  --accent-light: #c084fc;
+  --accent-dark: #6d28d9;
+
+  --secondary: #06b6d4;
+  --secondary-light: #67e8f9;
+
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  --accent-bg: rgba(139, 92, 246, 0.12);
+  --accent-border: rgba(139, 92, 246, 0.45);
+  --social-bg: rgba(246, 240, 255, 0.7);
+
+  --shadow:
+    rgba(139, 92, 246, 0.08) 0 12px 20px -4px,
+    rgba(0, 0, 0, 0.06) 0 6px 10px -3px;
+
+  --glass: rgba(255, 255, 255, 0.65);
 
 :root {
   color-scheme: light;
@@ -23,70 +50,293 @@
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color: var(--text);
-  background: var(--bg);
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #faf7ff 100%
+  );
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+}
 
-  @media (max-width: 1024px) {
+@media (max-width: 1024px) {
+  :root {
     font-size: 16px;
   }
 }
 
 body {
   margin: 0;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(255, 164, 88, 0.28), transparent 22%),
-    radial-gradient(circle at bottom right, rgba(36, 79, 130, 0.18), transparent 28%),
-    var(--bg);
+  background: var(--bg);
 }
+
+/* MAIN CONTAINER */
 
 #root {
-  min-height: 100vh;
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  box-sizing: border-box;
+  border-inline: 1px solid var(--border);
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
 }
 
+/* Animated gradient top line */
+
+#root::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 5px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    var(--secondary),
+    var(--accent-light),
+    var(--accent)
+  );
+  background-size: 300% 300%;
+  animation: gradientMove 8s ease infinite;
+}
+
+/* Decorative blurred circles */
+
+#root::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: rgba(192, 132, 252, 0.12);
+  border-radius: 50%;
+  top: -100px;
+  right: -100px;
+  filter: blur(60px);
+  z-index: 0;
+}
+
+/* TYPOGRAPHY */
+
 h1,
-h2 {
+h2,
+h3 {
   font-family: var(--heading);
-  font-weight: 500;
   color: var(--text-h);
+  position: relative;
+  z-index: 2;
 }
 
 h1 {
-  font-size: 64px;
-  letter-spacing: -2px;
-  line-height: 0.96;
-  margin: 0 0 18px;
-  @media (max-width: 1024px) {
-    font-size: 42px;
-  }
+  font-size: 56px;
+  margin: 32px 0;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  background: linear-gradient(
+    90deg,
+    var(--accent-dark),
+    var(--accent),
+    var(--secondary)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
+
 h2 {
   font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+  margin-bottom: 10px;
 }
+
+h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
 p {
   margin: 0;
+  color: var(--text);
+  position: relative;
+  z-index: 2;
 }
+
+/* CODE */
 
 code,
 .counter {
   font-family: var(--mono);
   display: inline-flex;
-  border-radius: 4px;
+  border-radius: 8px;
   color: var(--text-h);
 }
 
 code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
   background: var(--code-bg);
+  padding: 6px 10px;
+  border: 1px solid var(--accent-border);
+  font-size: 15px;
+}
+
+/* GLASS CARD */
+
+.card {
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+  transition: 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+/* BUTTON */
+
+.button {
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    var(--secondary)
+  );
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.button:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.button-outline {
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+}
+
+.button-outline:hover {
+  background: var(--accent-bg);
+}
+
+/* BADGES */
+
+.badge {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--accent-bg);
+  color: var(--accent-dark);
+  border: 1px solid var(--accent-border);
+}
+
+.badge-success {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+}
+
+/* INPUT FIELD */
+
+.input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  font-size: 15px;
+  transition: 0.3s ease;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.08);
+}
+
+/* NAVBAR */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(10px);
+}
+
+/* GRID */
+
+.grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* LOADER */
+
+.loader {
+  width: 42px;
+  height: 42px;
+  border: 4px solid #eee;
+  border-top: 4px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* SCROLLBAR */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-light);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ANIMATIONS */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
