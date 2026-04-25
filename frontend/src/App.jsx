@@ -1,12 +1,33 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, Users, Box, LayoutDashboard, Clock, X, Plus, Info, Map as MapIcon, Cpu, Activity, TrendingUp, Battery, Wifi, Server, Calendar, AlertTriangle, CheckCircle, BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Clock3, Zap } from 'lucide-react';
+import { Search, MapPin, Users, Box, LayoutDashboard, Clock, X, Plus, Info, Map as MapIcon, Cpu, Activity, TrendingUp, Battery, Wifi, Server, Calendar, AlertTriangle, CheckCircle, BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Clock3, Zap, Bell, Trash2, Check, AlertOctagon, Info as InfoIcon, XCircle } from 'lucide-react';
 import FloatingLines from './FloatingLines';
 import RotatingText from './RotatingText';
 import './App.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+// Notification types
+const NOTIFICATION_TYPES = {
+  SUCCESS: 'success',
+  ERROR: 'error',
+  WARNING: 'warning',
+  INFO: 'info'
+};
+
+// Generate unique ID
+const generateId = () => Math.random().toString(36).substr(2, 9);
+
+// Create notification
+const createNotification = (type, title, message) => ({
+  id: generateId(),
+  type,
+  title,
+  message,
+  timestamp: new Date(),
+  read: false
+});
 
 function App() {
   const [resources, setResources] = useState([]);
@@ -18,25 +39,119 @@ function App() {
   const [drawerTab, setDrawerTab] = useState('identity');
   const [selectedView, setSelectedView] = useState('dashboard');
   
+  // Notification state
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationPanel, setNotificationPanel] = useState(false);
+  
   const [formData, setFormData] = useState({ name: '', type: 'LECTURE_HALL', capacity: '', location: '', availabilityWindows: '08:00 AM - 05:00 PM' });
 
+  // Add notification function
+  const addNotification = (type, title, message) => {
+    const newNotification = createNotification(type, title, message);
+    setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep max 50 notifications
+  };
+
+  // Mark notification as read
+  const markAsRead = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  // Mark all as read
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  // Delete notification
+  const deleteNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  // Clear all notifications
+  const clearAllNotifications = () => {
+    setNotifications([]);
+  };
+
+  // Get unread count
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Get notification icon
+  const getNotificationIcon = (type) => {
+    switch(type) {
+      case NOTIFICATION_TYPES.SUCCESS: return <CheckCircle size={18} />;
+      case NOTIFICATION_TYPES.ERROR: return <XCircle size={18} />;
+      case NOTIFICATION_TYPES.WARNING: return <AlertTriangle size={18} />;
+      case NOTIFICATION_TYPES.INFO: return <InfoIcon size={18} />;
+      default: return <Bell size={18} />;
+    }
+  };
+
+  // Get notification color
+  const getNotificationColor = (type) => {
+    switch(type) {
+      case NOTIFICATION_TYPES.SUCCESS: return '#10b981';
+      case NOTIFICATION_TYPES.ERROR: return '#ef4444';
+      case NOTIFICATION_TYPES.WARNING: return '#f59e0b';
+      case NOTIFICATION_TYPES.INFO: return '#3b82f6';
+      default: return '#6b7280';
+    }
+  };
+
+  // Format timestamp
+  const formatTimestamp = (timestamp) => {
+    const now = new Date();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  };
+
   useEffect(() => { fetchResources(); }, []);
+
+  // Generate system notifications based on resources
+  useEffect(() => {
+    if (resources.length > 0) {
+      // Check for low capacity resources
+      const lowCapacity = resources.filter(r => r.capacity && r.capacity < 30);
+      if (lowCapacity.length > 0) {
+        addNotification(NOTIFICATION_TYPES.WARNING, 'Low Capacity Alert', `${lowCapacity.length} resource(s) have capacity below 30 users`);
+      }
+      
+      // Check for out of service resources
+      const outOfService = resources.filter(r => r.status === 'OUT_OF_SERVICE');
+      if (outOfService.length > 0) {
+        addNotification(NOTIFICATION_TYPES.ERROR, 'Service Outage', `${outOfService.length} resource(s) are currently out of service`);
+      }
+    }
+  }, [resources.length]);
 
   const fetchResources = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/resources`);
-      setResources(response.data.map(res => ({ ...res, status: res.status || 'ACTIVE' })));
+      const newResources = response.data.map(res => ({ ...res, status: res.status || 'ACTIVE' }));
+      setResources(newResources);
       setConnectionError('');
+      
+      // Add success notification on data fetch
+      if (newResources.length > 0) {
+        addNotification(NOTIFICATION_TYPES.SUCCESS, 'Data Synced', `Successfully loaded ${newResources.length} resources from database`);
+      }
     } catch (error) {
       console.error('Database connection failed.', error);
       setConnectionError('Unable to load resources. Make sure the backend and MongoDB are running.');
+      addNotification(NOTIFICATION_TYPES.ERROR, 'Connection Failed', 'Unable to connect to database. Please check backend and MongoDB.');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.location || !formData.capacity) {
-      alert('Please ensure Asset Identity, Sector Mapping, and Capacity are filled out.');
+      addNotification(NOTIFICATION_TYPES.WARNING, 'Validation Error', 'Please fill in all required fields: Asset Identity, Sector Mapping, and Capacity');
       return;
     }
     try {
@@ -48,6 +163,15 @@ function App() {
       setFormData({ name: '', type: 'LECTURE_HALL', capacity: '', location: '', availabilityWindows: '08:00 AM - 05:00 PM' });
       setConnectionError('');
       fetchResources();
+      setIsDrawerOpen(false);
+      setDrawerTab('identity');
+      addNotification(NOTIFICATION_TYPES.SUCCESS, 'Resource Created', `Successfully provisioned "${formData.name}" to the registry`);
+    } catch (error) {
+      console.error('Failed to save.', error);
+      setConnectionError('Unable to save the resource. Check the backend API and MongoDB connection.');
+      addNotification(NOTIFICATION_TYPES.ERROR, 'Save Failed', 'Unable to save the resource. Please try again.');
+    }
+  };
       setIsDrawerOpen(false);
       setDrawerTab('identity'); 
     } catch (error) {
@@ -165,7 +289,85 @@ function App() {
             <button className="primary-action-btn" onClick={() => setIsDrawerOpen(true)}>
               <Plus size={18} /> Provision Asset
             </button>
+            
+            {/* Notification Bell Button */}
+            <button className="notification-bell-btn" onClick={() => setNotificationPanel(!notificationPanel)}>
+              <Bell size={20} />
+              {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+            </button>
           </header>
+
+          {/* Notification Panel */}
+          <AnimatePresence>
+            {notificationPanel && (
+              <motion.div className="notification-panel" initial={{ opacity: 0, y: -10, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -10, height: 0 }}>
+                <div className="notification-panel-header">
+                  <h3><Bell size={18} /> Notifications</h3>
+                  <div className="notification-panel-actions">
+                    <button onClick={markAllAsRead} title="Mark all as read"><Check size={16} /></button>
+                    <button onClick={clearAllNotifications} title="Clear all"><Trash2 size={16} /></button>
+                    <button onClick={() => setNotificationPanel(false)}><X size={16} /></button>
+                  </div>
+                </div>
+                <div className="notification-list">
+                  {notifications.length === 0 ? (
+                    <div className="notification-empty">
+                      <Bell size={32} />
+                      <p>No notifications yet</p>
+                    </div>
+                  ) : (
+                    notifications.map(notification => (
+                      <motion.div 
+                        key={notification.id} 
+                        className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        style={{ borderLeftColor: getNotificationColor(notification.type) }}
+                      >
+                        <div className="notification-icon" style={{ color: getNotificationColor(notification.type) }}>
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="notification-content">
+                          <div className="notification-title">{notification.title}</div>
+                          <div className="notification-message">{notification.message}</div>
+                          <div className="notification-time">{formatTimestamp(notification.timestamp)}</div>
+                        </div>
+                        <div className="notification-actions">
+                          {!notification.read && <button onClick={() => markAsRead(notification.id)} title="Mark as read"><Check size={14} /></button>}
+                          <button onClick={() => deleteNotification(notification.id)} title="Delete"><X size={14} /></button>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Toast Notifications Container */}
+          <div className="toast-container">
+            <AnimatePresence>
+              {notifications.slice(0, 3).map((notification, index) => (
+                <motion.div
+                  key={notification.id}
+                  className={`toast toast-${notification.type}`}
+                  initial={{ opacity: 0, x: 100, y: -20 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
+                  exit={{ opacity: 0, x: 100 }}
+                  transition={{ type: 'spring', damping: 25 }}
+                  style={{ borderLeftColor: getNotificationColor(notification.type) }}
+                >
+                  <div className="toast-icon">{getNotificationIcon(notification.type)}</div>
+                  <div className="toast-content">
+                    <div className="toast-title">{notification.title}</div>
+                    <div className="toast-message">{notification.message}</div>
+                  </div>
+                  <button className="toast-close" onClick={() => deleteNotification(notification.id)}><X size={14} /></button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
 
           {/* Bento Box Metrics View - Enhanced with More Stats */}
           <div className="bento-grid">
